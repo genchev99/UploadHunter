@@ -4,27 +4,6 @@ const puppeteer = require("puppeteer");
 const randomString = require("randomstring");
 const fs = require("fs");
 
-(async () => {
-  try {
-    const browser = await initializeBrowser();
-    const page = await browser.page();
-
-    while (true) {
-      const url = generateUrl();
-      console.log(`[~] Opening: ${url}`);
-      await page.goto(url, {timeout: 200000, waitUntil: "networkidle2"});
-
-      if (await validateEndpoint(page)) {
-        /* In case the url contains download button/link */
-        fs.appendFileSync("scraped.txt", url);
-      }
-    }
-  } catch (e) {
-    console.error(e);
-    process.exit(1);
-  }
-})();
-
 /**
  * Checks if download button exists
  * @param page
@@ -64,9 +43,32 @@ const initializeBrowser = () =>
     try {
       /* TODO Tor socks proxy for dark web pages option */
       const browser = await puppeteer.launch({
-        headless: false
+        headless: true
       });
+
+      return resolve(browser);
     } catch (e) {
       return reject(e);
     }
   });
+
+(async () => {
+  try {
+    const browser = await initializeBrowser();
+    const page = await browser.newPage();
+
+    while (true) {
+      const url = generateUrl();
+      console.log(`[~] Opening: ${url}`);
+      await page.goto(url, {timeout: 200000, waitUntil: "networkidle2"});
+
+      if (await validateEndpoint(page)) {
+        /* In case the url contains download button/link */
+        fs.appendFileSync("../scraped.txt", url);
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    process.exit(1);
+  }
+})();
